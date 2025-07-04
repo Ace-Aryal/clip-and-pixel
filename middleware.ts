@@ -3,8 +3,6 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isProtectedRoute = createRouteMatcher([
   "/social-share(.*)",
   "/video-upload(.*)",
-  "/api/upload-video(.*)",
-  "/api/social-share(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
