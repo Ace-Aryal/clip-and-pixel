@@ -1,14 +1,8 @@
 "use client";
 import axios from "axios";
-import React, {
-  ChangeEvent,
-  FormEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
+import { CldImage } from "next-cloudinary";
 function SocaialSharePage() {
   const socialFormats = {
     "Instagram Square (1:1)": { width: 1080, height: 1080, aspectRatio: "1:1" },
@@ -50,10 +44,15 @@ function SocaialSharePage() {
     const formData = new FormData();
     formData.append("file", file);
     try {
-      const imageUploadRespone = await axios.post("/api/image-uplod");
+      const imageUploadRespone = await axios.post(
+        "/api/image-upload",
+        formData
+      );
       console.log(imageUploadRespone);
       toast.success("Image uploaded sucessfully");
-      setImagePublicId(imageUploadRespone.data.publicId);
+      console.log(imageUploadRespone.data, "data");
+      setImagePublicId(imageUploadRespone.data.publicID);
+      setHasUploadedImage(true);
     } catch (error) {
       console.error(error);
       toast.error(
@@ -63,7 +62,104 @@ function SocaialSharePage() {
       setIsUploading(false);
     }
   };
-  return <div>SocaialSharePage</div>;
+  const handleDownload = () => {
+    if (!imageRef.current) return;
+
+    fetch(imageRef.current.src)
+      .then((response) => response.blob())
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${selectedFormat
+          .replace(/\s+/g, "_")
+          .toLowerCase()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(link);
+      });
+  };
+  return (
+    <div className="container mx-auto p-4 max-w-4xl">
+      <h1 className="text-3xl font-bold mb-6 text-center">
+        Social Media Image Creator
+      </h1>
+
+      <div className="card">
+        <div className="card-body">
+          <h2 className="card-title mb-4">Upload an Image</h2>
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text">Choose an image file</span>
+            </label>
+            <input
+              type="file"
+              onChange={hanldeImageUpload}
+              className="file-input file-input-bordered  w-full"
+            />
+          </div>
+
+          {isUploading && (
+            <div className="mt-4">
+              <progress className="progress progress-primary w-full"></progress>
+            </div>
+          )}
+
+          {hasUploadedImage && (
+            <div className="mt-6">
+              <h2 className="card-title mb-4">Select Social Media Format</h2>
+              <div className="form-control">
+                <select
+                  className="select text-white w-full"
+                  value={selectedFormat}
+                  onChange={(e) =>
+                    setSelectedFormat(e.target.value as SocialFormat)
+                  }
+                >
+                  {Object.keys(socialFormats).map((format) => (
+                    <option key={format} value={format}>
+                      {format}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="mt-6 relative">
+                <h3 className="text-lg font-semibold mb-2">Preview:</h3>
+                <div className="flex justify-center">
+                  {isTransforming && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-base-100 bg-opacity-50 z-10">
+                      <span className="loading text-white loading-spinner loading-lg"></span>
+                    </div>
+                  )}
+                  <CldImage
+                    width={socialFormats[selectedFormat].width}
+                    height={socialFormats[selectedFormat].height}
+                    src={imagePublicId}
+                    sizes="100vw"
+                    alt="transformed image"
+                    crop="fill"
+                    aspectRatio={socialFormats[selectedFormat].aspectRatio}
+                    gravity="auto"
+                    ref={imageRef}
+                    onLoad={() => setIsTransforming(false)}
+                  />
+                </div>
+              </div>
+
+              <div className="card-actions justify-end mt-6">
+                <button className="btn btn-primary" onClick={handleDownload}>
+                  Download for {selectedFormat}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default SocaialSharePage;
