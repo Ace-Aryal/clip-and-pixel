@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import Navbar from "./_components/navbar";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "sonner";
 import Providers from "./_components/providers";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +28,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <Providers>
+        <Toaster position="top-center" richColors />
         <html lang="en" className="bg-white text-zinc-700">
           <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased `}
